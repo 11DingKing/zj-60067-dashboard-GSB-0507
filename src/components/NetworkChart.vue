@@ -159,23 +159,29 @@ function initChart() {
 function updateChart() {
   if (!chartInstance) return;
 
-  const times = networkData.value.map((d) => d.time);
-  const inboundData = networkData.value.map((d) => d.inbound);
-  const outboundData = networkData.value.map((d) => d.outbound);
+  const validData = networkData.value.filter(
+    (d) => d && d.time != null && d.inbound != null && d.outbound != null,
+  );
+  const times = validData.map((d) => d.time);
+  const inboundData = validData.map((d) => d.inbound);
+  const outboundData = validData.map((d) => d.outbound);
 
-  chartInstance.setOption({
-    xAxis: {
-      data: times,
+  chartInstance.setOption(
+    {
+      xAxis: {
+        data: times,
+      },
+      series: [
+        {
+          data: inboundData,
+        },
+        {
+          data: outboundData,
+        },
+      ],
     },
-    series: [
-      {
-        data: inboundData,
-      },
-      {
-        data: outboundData,
-      },
-    ],
-  });
+    { replaceMerge: ["series"] },
+  );
 }
 
 function handleResize() {

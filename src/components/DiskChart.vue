@@ -104,21 +104,26 @@ function initChart() {
 function updateChart() {
   if (!chartInstance) return;
 
-  const data = diskUsage.value.map((d, index) => ({
-    name: d.name,
-    value: d.percentage,
-    itemStyle: {
-      color: colors[index % colors.length],
-    },
-  }));
-
-  chartInstance.setOption({
-    series: [
-      {
-        data: data,
+  const data = diskUsage.value
+    .filter((d) => d && d.name != null && d.percentage != null)
+    .map((d, index) => ({
+      name: d.name,
+      value: d.percentage,
+      itemStyle: {
+        color: colors[index % colors.length],
       },
-    ],
-  });
+    }));
+
+  chartInstance.setOption(
+    {
+      series: [
+        {
+          data: data,
+        },
+      ],
+    },
+    { replaceMerge: ["series"] },
+  );
 }
 
 function handleResize() {

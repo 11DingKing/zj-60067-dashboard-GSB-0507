@@ -1,7 +1,7 @@
 <template>
   <div class="flip-number-wrapper">
-    <span 
-      v-for="(digit, index) in displayDigits" 
+    <span
+      v-for="(digit, index) in displayDigits"
       :key="index"
       class="digit-container"
       :class="{ flipping: flippingDigits[index] }"
@@ -12,59 +12,69 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted, nextTick } from 'vue'
+import { ref, watch, onMounted, onUnmounted, nextTick } from "vue";
 
 const props = defineProps<{
-  value: number
-  color?: string
-}>()
+  value: number;
+  color?: string;
+}>();
 
-const displayDigits = ref<string[]>([])
-const flippingDigits = ref<boolean[]>([])
+const displayDigits = ref<string[]>([]);
+const flippingDigits = ref<boolean[]>([]);
+let flipTimer: number | null = null;
 
 function getDigits(num: number): string[] {
-  return num.toString().split('')
+  return num.toString().split("");
 }
 
 function updateDigits() {
-  const newDigits = getDigits(props.value)
-  const oldDigits = [...displayDigits.value]
-  
+  const newDigits = getDigits(props.value);
+  const oldDigits = [...displayDigits.value];
+
   while (oldDigits.length < newDigits.length) {
-    oldDigits.unshift('0')
+    oldDigits.unshift("0");
   }
-  
+
   flippingDigits.value = newDigits.map((_, index) => {
-    const oldIndex = index - (newDigits.length - oldDigits.length)
-    return oldIndex >= 0 ? oldDigits[oldIndex] !== newDigits[index] : true
-  })
-  
-  displayDigits.value = newDigits
-  
+    const oldIndex = index - (newDigits.length - oldDigits.length);
+    return oldIndex >= 0 ? oldDigits[oldIndex] !== newDigits[index] : true;
+  });
+
+  displayDigits.value = newDigits;
+
   nextTick(() => {
-    setTimeout(() => {
-      flippingDigits.value = flippingDigits.value.map(() => false)
-    }, 500)
-  })
+    if (flipTimer) clearTimeout(flipTimer);
+    flipTimer = window.setTimeout(() => {
+      flippingDigits.value = flippingDigits.value.map(() => false);
+      flipTimer = null;
+    }, 500);
+  });
 }
 
 watch(
   () => props.value,
   () => {
-    updateDigits()
-  }
-)
+    updateDigits();
+  },
+);
 
 onMounted(() => {
   updateDigits()
 })
+
+onUnmounted(() => {
+  if (flipTimer) {
+    clearTimeout(flipTimer)
+    flipTimer = null
+  }
+});
 </script>
 
 <style scoped>
 .flip-number-wrapper {
   display: flex;
   gap: 2px;
-  font-family: 'Courier New', monospace;
+  font-family: "Courier New", monospace;
 }
 
 .digit-container {
@@ -72,13 +82,17 @@ onMounted(() => {
   display: inline-block;
   width: 28px;
   height: 44px;
-  background: linear-gradient(180deg, rgba(0, 240, 255, 0.1), rgba(0, 128, 255, 0.1));
+  background: linear-gradient(
+    180deg,
+    rgba(0, 240, 255, 0.1),
+    rgba(0, 128, 255, 0.1)
+  );
   border-radius: 4px;
   overflow: hidden;
 }
 
 .digit-container::before {
-  content: '';
+  content: "";
   position: absolute;
   top: 0;
   left: 0;
@@ -101,7 +115,9 @@ onMounted(() => {
   font-size: 36px;
   font-weight: bold;
   text-shadow: 0 0 10px currentColor;
-  transition: transform 0.5s ease, opacity 0.5s ease;
+  transition:
+    transform 0.5s ease,
+    opacity 0.5s ease;
 }
 
 .digit-container.flipping .digit {

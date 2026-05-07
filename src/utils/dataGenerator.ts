@@ -8,7 +8,12 @@ const DISK_THRESHOLD = 90
 const previousValues: Record<string, { cpu: number; memory: number; disk: number }> = {}
 
 function clamp(value: number, min: number, max: number): number {
+  if (value == null || isNaN(value)) return min
   return Math.max(min, Math.min(max, value))
+}
+
+function safeNumber(value: number, fallback: number): number {
+  return value != null && !isNaN(value) ? value : fallback
 }
 
 function fluctuate(value: number, maxChange: number, min: number, max: number): number {
@@ -20,11 +25,13 @@ export function generateServers(): Server[] {
   const now = new Date()
   
   return mockData.servers.map((srv) => {
+    if (!srv || !srv.id) return null
+    
     const prev = previousValues[srv.id] || { cpu: 45, memory: 60, disk: 70 }
     
-    const cpu = fluctuate(prev.cpu, 5, 10, 95)
-    const memory = fluctuate(prev.memory, 3, 20, 98)
-    const disk = fluctuate(prev.disk, 1, 30, 99)
+    const cpu = fluctuate(safeNumber(prev.cpu, 45), 5, 10, 95)
+    const memory = fluctuate(safeNumber(prev.memory, 60), 3, 20, 98)
+    const disk = fluctuate(safeNumber(prev.disk, 70), 1, 30, 99)
     
     previousValues[srv.id] = { cpu, memory, disk }
     
@@ -41,23 +48,23 @@ export function generateServers(): Server[] {
     
     return {
       id: srv.id,
-      ip: srv.ip,
-      name: srv.name,
+      ip: srv.ip || '',
+      name: srv.name || '',
       status,
       cpu,
       memory,
       disk,
-      city: srv.city
+      city: srv.city || ''
     }
-  })
+  }).filter(Boolean) as Server[]
 }
 
 export function generateTrendData(prevData: TrendData[] = [], count: number = 60): TrendData[] {
   const now = new Date()
   const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`
   
-  const lastCpu = prevData.length > 0 ? prevData[prevData.length - 1].cpu : 45
-  const lastMemory = prevData.length > 0 ? prevData[prevData.length - 1].memory : 60
+  const lastCpu = prevData.length > 0 ? safeNumber(prevData[prevData.length - 1].cpu, 45) : 45
+  const lastMemory = prevData.length > 0 ? safeNumber(prevData[prevData.length - 1].memory, 60) : 60
   
   const newData: TrendData = {
     time: timeStr,
@@ -65,7 +72,8 @@ export function generateTrendData(prevData: TrendData[] = [], count: number = 60
     memory: fluctuate(lastMemory, 3, 30, 95)
   }
   
-  const result = [...prevData, newData]
+  const filtered = prevData.filter((d) => d && d.time != null && d.cpu != null && d.memory != null)
+  const result = [...filtered, newData]
   if (result.length > count) {
     return result.slice(result.length - count)
   }
@@ -76,8 +84,8 @@ export function generateNetworkData(prevData: NetworkData[] = [], count: number 
   const now = new Date()
   const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`
   
-  const lastInbound = prevData.length > 0 ? prevData[prevData.length - 1].inbound : 500
-  const lastOutbound = prevData.length > 0 ? prevData[prevData.length - 1].outbound : 300
+  const lastInbound = prevData.length > 0 ? safeNumber(prevData[prevData.length - 1].inbound, 500) : 500
+  const lastOutbound = prevData.length > 0 ? safeNumber(prevData[prevData.length - 1].outbound, 300) : 300
   
   const newData: NetworkData = {
     time: timeStr,
@@ -85,7 +93,8 @@ export function generateNetworkData(prevData: NetworkData[] = [], count: number 
     outbound: fluctuate(lastOutbound, 50, 50, 800)
   }
   
-  const result = [...prevData, newData]
+  const filtered = prevData.filter((d) => d && d.time != null && d.inbound != null && d.outbound != null)
+  const result = [...filtered, newData]
   if (result.length > count) {
     return result.slice(result.length - count)
   }
@@ -93,12 +102,14 @@ export function generateNetworkData(prevData: NetworkData[] = [], count: number 
 }
 
 export function generateDiskUsage(servers: Server[]): DiskUsage[] {
-  return servers.map((srv) => ({
-    name: srv.name,
-    used: Math.round(srv.disk * 10) / 10,
-    total: 100,
-    percentage: srv.disk
-  }))
+  return servers
+    .filter((srv) => srv && srv.name && srv.disk != null)
+    .map((srv) => ({
+      name: srv.name,
+      used: Math.round(safeNumber(srv.disk, 0) * 10) / 10,
+      total: 100,
+      percentage: safeNumber(srv.disk, 0)
+    }))
 }
 
 const alertContents = {

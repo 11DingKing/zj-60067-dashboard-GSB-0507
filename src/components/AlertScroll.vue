@@ -38,6 +38,7 @@ const containerRef = ref<HTMLDivElement | null>(null);
 const isNewAlert = ref(false);
 const scrollPosition = ref(0);
 let animationFrame: number | null = null;
+let newAlertTimer: number | null = null;
 let previousCount = 0;
 
 const levelText: Record<string, string> = {
@@ -57,8 +58,25 @@ function truncate(str: string, maxLen: number): string {
 
 let scrollRetryCount = 0;
 const MAX_SCROLL_RETRIES = 200;
+let isScrollActive = false;
+
+function startScrollLoop() {
+  if (isScrollActive) return;
+  isScrollActive = true;
+  animationFrame = requestAnimationFrame(autoScroll);
+}
+
+function stopScrollLoop() {
+  isScrollActive = false;
+  if (animationFrame) {
+    cancelAnimationFrame(animationFrame);
+    animationFrame = null;
+  }
+}
 
 function autoScroll() {
+  if (!isScrollActive) return;
+
   if (!containerRef.value) {
     scrollRetryCount++;
     if (scrollRetryCount < MAX_SCROLL_RETRIES) {
@@ -85,13 +103,23 @@ function autoScroll() {
   animationFrame = requestAnimationFrame(autoScroll);
 }
 
+function handleVisibilityChange() {
+  if (document.hidden) {
+    stopScrollLoop();
+  } else {
+    startScrollLoop();
+  }
+}
+
 watch(
   () => alerts.value.length,
   (newCount) => {
     if (newCount > previousCount && previousCount > 0) {
       isNewAlert.value = true;
-      setTimeout(() => {
+      if (newAlertTimer) clearTimeout(newAlertTimer);
+      newAlertTimer = window.setTimeout(() => {
         isNewAlert.value = false;
+        newAlertTimer = null;
       }, 2000);
     }
     previousCount = newCount;
@@ -100,13 +128,17 @@ watch(
 
 onMounted(() => {
   previousCount = alerts.value.length;
-  animationFrame = requestAnimationFrame(autoScroll);
+  startScrollLoop();
+  document.addEventListener("visibilitychange", handleVisibilityChange);
 });
 
 onUnmounted(() => {
-  if (animationFrame) {
-    cancelAnimationFrame(animationFrame);
+  stopScrollLoop();
+  if (newAlertTimer) {
+    clearTimeout(newAlertTimer);
+    newAlertTimer = null;
   }
+  document.removeEventListener("visibilitychange", handleVisibilityChange);
 });
 </script>
 
