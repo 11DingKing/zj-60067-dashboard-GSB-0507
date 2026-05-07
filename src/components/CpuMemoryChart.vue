@@ -173,9 +173,19 @@ function initChart() {
 function updateChart() {
   if (!chartInstance) return;
 
-  const times = trendData.value.map((d) => d.time);
-  const cpuData = trendData.value.map((d) => d.cpu);
-  const memoryData = trendData.value.map((d) => d.memory);
+  const validData = trendData.value.filter(
+    (d) =>
+      d &&
+      d.time != null &&
+      d.cpu != null &&
+      d.memory != null &&
+      typeof d.cpu === "number" &&
+      typeof d.memory === "number",
+  );
+
+  const times = validData.map((d) => d.time);
+  const cpuData = validData.map((d) => d.cpu);
+  const memoryData = validData.map((d) => d.memory);
 
   chartInstance.setOption({
     xAxis: {

@@ -159,9 +159,19 @@ function initChart() {
 function updateChart() {
   if (!chartInstance) return;
 
-  const times = networkData.value.map((d) => d.time);
-  const inboundData = networkData.value.map((d) => d.inbound);
-  const outboundData = networkData.value.map((d) => d.outbound);
+  const validData = networkData.value.filter(
+    (d) =>
+      d &&
+      d.time != null &&
+      d.inbound != null &&
+      d.outbound != null &&
+      typeof d.inbound === "number" &&
+      typeof d.outbound === "number",
+  );
+
+  const times = validData.map((d) => d.time);
+  const inboundData = validData.map((d) => d.inbound);
+  const outboundData = validData.map((d) => d.outbound);
 
   chartInstance.setOption({
     xAxis: {

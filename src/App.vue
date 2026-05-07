@@ -13,12 +13,14 @@ const DESIGN_WIDTH = 1920;
 const DESIGN_HEIGHT = 1080;
 
 const scale = ref(1);
+const offsetX = ref(0);
+const offsetY = ref(0);
 
 const wrapperStyle = computed(() => ({
   width: `${DESIGN_WIDTH}px`,
   height: `${DESIGN_HEIGHT}px`,
-  transform: `scale(${scale.value})`,
-  transformOrigin: "center center",
+  transform: `scale(${scale.value}) translate(${offsetX.value}px, ${offsetY.value}px)`,
+  transformOrigin: "top left",
 }));
 
 function updateScale() {
@@ -27,6 +29,11 @@ function updateScale() {
   const scaleX = windowWidth / DESIGN_WIDTH;
   const scaleY = windowHeight / DESIGN_HEIGHT;
   scale.value = Math.min(scaleX, scaleY);
+
+  const scaledWidth = DESIGN_WIDTH * scale.value;
+  const scaledHeight = DESIGN_HEIGHT * scale.value;
+  offsetX.value = (windowWidth - scaledWidth) / (2 * scale.value);
+  offsetY.value = (windowHeight - scaledHeight) / (2 * scale.value);
 }
 
 let resizeTimer: number | null = null;

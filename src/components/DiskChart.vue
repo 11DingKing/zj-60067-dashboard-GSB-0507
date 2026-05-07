@@ -104,7 +104,15 @@ function initChart() {
 function updateChart() {
   if (!chartInstance) return;
 
-  const data = diskUsage.value.map((d, index) => ({
+  const validData = diskUsage.value.filter(
+    (d) =>
+      d &&
+      d.name != null &&
+      d.percentage != null &&
+      typeof d.percentage === "number",
+  );
+
+  const data = validData.map((d, index) => ({
     name: d.name,
     value: d.percentage,
     itemStyle: {

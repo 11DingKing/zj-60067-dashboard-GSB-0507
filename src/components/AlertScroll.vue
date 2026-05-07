@@ -38,6 +38,7 @@ const containerRef = ref<HTMLDivElement | null>(null);
 const isNewAlert = ref(false);
 const scrollPosition = ref(0);
 let animationFrame: number | null = null;
+let newAlertTimeout: number | null = null;
 let previousCount = 0;
 
 const levelText: Record<string, string> = {
@@ -89,9 +90,13 @@ watch(
   () => alerts.value.length,
   (newCount) => {
     if (newCount > previousCount && previousCount > 0) {
+      if (newAlertTimeout) {
+        clearTimeout(newAlertTimeout);
+      }
       isNewAlert.value = true;
-      setTimeout(() => {
+      newAlertTimeout = window.setTimeout(() => {
         isNewAlert.value = false;
+        newAlertTimeout = null;
       }, 2000);
     }
     previousCount = newCount;
@@ -106,6 +111,10 @@ onMounted(() => {
 onUnmounted(() => {
   if (animationFrame) {
     cancelAnimationFrame(animationFrame);
+  }
+  if (newAlertTimeout) {
+    clearTimeout(newAlertTimeout);
+    newAlertTimeout = null;
   }
 });
 </script>
