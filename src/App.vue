@@ -63,7 +63,6 @@ onUnmounted(() => {
 }
 
 .dashboard-wrapper {
-  position: relative;
   flex-shrink: 0;
 }
 </style>

@@ -173,23 +173,29 @@ function initChart() {
 function updateChart() {
   if (!chartInstance) return;
 
-  const times = trendData.value.map((d) => d.time);
-  const cpuData = trendData.value.map((d) => d.cpu);
-  const memoryData = trendData.value.map((d) => d.memory);
+  const validData = trendData.value.filter(
+    (d) => d && d.time != null && d.cpu != null && d.memory != null,
+  );
+  const times = validData.map((d) => d.time);
+  const cpuData = validData.map((d) => d.cpu);
+  const memoryData = validData.map((d) => d.memory);
 
-  chartInstance.setOption({
-    xAxis: {
-      data: times,
+  chartInstance.setOption(
+    {
+      xAxis: {
+        data: times,
+      },
+      series: [
+        {
+          data: cpuData,
+        },
+        {
+          data: memoryData,
+        },
+      ],
     },
-    series: [
-      {
-        data: cpuData,
-      },
-      {
-        data: memoryData,
-      },
-    ],
-  });
+    { replaceMerge: ["series"] },
+  );
 }
 
 function handleResize() {
