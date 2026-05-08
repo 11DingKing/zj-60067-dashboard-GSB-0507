@@ -13,20 +13,32 @@ const DESIGN_WIDTH = 1920;
 const DESIGN_HEIGHT = 1080;
 
 const scale = ref(1);
+const left = ref(0);
+const top = ref(0);
 
 const wrapperStyle = computed(() => ({
   width: `${DESIGN_WIDTH}px`,
   height: `${DESIGN_HEIGHT}px`,
   transform: `scale(${scale.value})`,
-  transformOrigin: "center center",
+  transformOrigin: "0 0",
+  position: "absolute" as const,
+  left: `${left.value}px`,
+  top: `${top.value}px`,
 }));
 
 function updateScale() {
   const windowWidth = window.innerWidth;
   const windowHeight = window.innerHeight;
+
   const scaleX = windowWidth / DESIGN_WIDTH;
   const scaleY = windowHeight / DESIGN_HEIGHT;
   scale.value = Math.min(scaleX, scaleY);
+
+  const scaledWidth = DESIGN_WIDTH * scale.value;
+  const scaledHeight = DESIGN_HEIGHT * scale.value;
+
+  left.value = (windowWidth - scaledWidth) / 2;
+  top.value = (windowHeight - scaledHeight) / 2;
 }
 
 let resizeTimer: number | null = null;
@@ -55,15 +67,12 @@ onUnmounted(() => {
 .app-container {
   width: 100%;
   height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  position: relative;
   background: #000;
   overflow: hidden;
 }
 
 .dashboard-wrapper {
   position: relative;
-  flex-shrink: 0;
 }
 </style>
